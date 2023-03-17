@@ -3,11 +3,14 @@ import os
 import imageio as iio
 import numpy as np
 import matplotlib.pyplot as plt
+import time
+
+start = time.time()
 
 pose = sorted(os.listdir('pose'))
 depth = sorted(os.listdir('depth'))
-all_points = np.zeros((3,1080*1080,4)) #change this 3
-for x in range(1, 3): #change this 3
+all_points = np.zeros((100,1080*1080,4)) #change this 3
+for x in range(1, 100): #change this 3
     # load pose json
     file_pose = open('pose/' + pose[x])
     data_pose = json.load(file_pose)
@@ -57,17 +60,19 @@ ax = fig.add_subplot(111, projection = '3d')
 # ax.scatter(pixels[:,0], pixels[:,1], pixels[:,2])
 # ax.scatter(points_3D[:,0], points_3D[:,1], points_3D[:,2], s=.1, alpha=0.5)
 # ax.scatter(points_3D_world[:,0], points_3D_world[:,1], points_3D_world[:,2], s=.1, alpha=0.5)
-print(all_points.shape)
-# plt.scatter(all_points[0,:,0], all_points[0,:,1], all_points[0,:,2], color="r")
-plt.scatter(all_points[1,:,0], all_points[1,:,1], all_points[1,:,2], color="g")
-plt.scatter(all_points[2,:,0], all_points[2,:,1], all_points[2,:,2], color="b")
 
 
+# print(all_points.shape)
+plt.scatter(all_points[:,:,0], all_points[:,:,1], all_points[:,:,2], color="g")
+# plt.scatter(all_points[2,:,0], all_points[2,:,1], all_points[2,:,2], color="b")
 
 plt.show()
+
+
 # print(points_3D.shape)
 # print(points_3D)
 
     
 
- 
+end = time.time()
+print(end - start, " seconds")
