@@ -2,22 +2,29 @@ import numpy as np
 import open3d as o3d
 import matplotlib.pyplot as plt
 
+RESOLUTION = 0.025 # meters
+
 def view_pc():
 
     print("Load a ply point cloud, print it, and render it")
-    ply_point_cloud = o3d.data.PLYPointCloud()
-    pcd = o3d.io.read_point_cloud(ply_point_cloud.path)
+    # ply_point_cloud = o3d.data.PLYPointCloud()
+    # path = ply_point_cloud.path
+    path = '/storage/pointclouds/ptcloud_0.1grid_colored.ply'
+    pcd = o3d.io.read_point_cloud(path)
     print(pcd)
-    print(np.asarray(pcd.points))
-    o3d.visualization.draw_geometries([pcd],
+    pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+    mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0, origin=[0, 0, 0])
+    o3d.visualization.draw_geometries([pcd, mesh_frame],
                                     zoom=0.3412,
                                     front=[0.4257, -0.2125, -0.8795],
                                     lookat=[2.6172, 2.0475, 1.532],
                                     up=[-0.0694, -0.9768, 0.2024])
 
 def plane_seg():
-    pcd_point_cloud = o3d.data.PLYPointCloud()
-    pcd = o3d.io.read_point_cloud(pcd_point_cloud.path)
+    # pcd_point_cloud = o3d.data.PLYPointCloud()
+    # pcd = o3d.io.read_point_cloud(pcd_point_cloud.path)
+    path = '/storage/pointclouds/ptcloud_0.1grid_colored.ply'
+    pcd = o3d.io.read_point_cloud(path)
 
     outliers = o3d.geometry.PointCloud(pcd)
     print("Total points:", len(outliers.points))
@@ -44,11 +51,11 @@ def plane_seg():
         outliers = outliers.select_by_index(inliers, invert=True)
 
     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.5, origin=[0, 0, 0])
-    # o3d.visualization.draw_geometries(clouds + [mesh_frame],
-    #                     zoom=0.8,
-    #                     front=[-0.4999, -0.1659, -0.8499],
-    #                     lookat=[2.1813, 2.0619, 2.0999],
-    #                     up=[0.1204, -0.9852, 0.1215])
+    o3d.visualization.draw_geometries(clouds + [mesh_frame],
+                        zoom=0.8,
+                        front=[-0.4999, -0.1659, -0.8499],
+                        lookat=[2.1813, 2.0619, 2.0999],
+                        up=[0.1204, -0.9852, 0.1215])
 
     # mesh_sphere = o3d.create_mesh_sphere(radius = 1.0)
     # mesh_sphere.compute_vertex_normals()
@@ -62,8 +69,8 @@ def plane_seg():
     mag = 0
     points = 0
     for i, plane in enumerate(planes):
-        y_dir = np.abs(plane[1]) / np.linalg.norm(plane[:3])
-        if y_dir > .9 and len(clouds[i].points) > points:
+        z_dir = np.abs(plane[2]) / np.linalg.norm(plane[:3])
+        if z_dir > .9 and len(clouds[i].points) > points:
             points = len(clouds[i].points)
             ground = plane
             ground_cloud = clouds[i]
@@ -76,7 +83,7 @@ def plane_seg():
     print("Bounds:")
     print(min_bound, max_bound)
 
-    ground_height = np.mean(ground_points[:, 1])
+    ground_height = np.mean(ground_points[:, 2])
     print("Mean ground height:", ground_height)
 
     # num_cells = 1000
@@ -128,7 +135,7 @@ def plane_seg():
             total_points += len(cell_cloud.points)
             if len(cell_cloud.points) != 0:
                 middle = np.median(cell_cloud.points, axis=0)
-                if (abs(ground_height - middle[1]) > ground_eps):
+                if (abs(ground_height - middle[2]) > ground_eps):
                     # Obstacle is here
                     grid[i, j] = 1
                     # print(f"Obstacle at ({i}, {j})")
@@ -143,6 +150,7 @@ def plane_seg():
     plt.gca().invert_yaxis()
     plt.savefig("obstacle_grid.png")
     plt.show()
+    np.save("obstacle_grid.npy", grid)
 
     o3d.visualization.draw_geometries([ground_cloud, pcd_obstacles, mesh_frame],
                                     front=[ -0.13628523412698096, -0.99051719584896003, -0.017378713602195017 ],
@@ -155,4 +163,5 @@ def plane_seg():
                                 #   up=[-0.0694, -0.9768, 0.2024])
 
 if __name__ == '__main__':
-    plane_seg()
+    # plane_seg()
+    view_pc()
