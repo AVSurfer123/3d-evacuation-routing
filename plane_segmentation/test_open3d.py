@@ -32,9 +32,11 @@ def plane_seg():
     clouds = []
     planes = []
 
+    mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.5, origin=[0, 0, 0])
+
     while True:
         plane_model, inliers = outliers.segment_plane(distance_threshold=0.015,
-                                                ransac_n=3,
+                                                ransac_n=10,
                                                 num_iterations=1000)
 
         if len(inliers) < 7000:
@@ -50,12 +52,11 @@ def plane_seg():
 
         outliers = outliers.select_by_index(inliers, invert=True)
 
-    mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.5, origin=[0, 0, 0])
-    o3d.visualization.draw_geometries(clouds + [mesh_frame],
-                        zoom=0.8,
-                        front=[-0.4999, -0.1659, -0.8499],
-                        lookat=[2.1813, 2.0619, 2.0999],
-                        up=[0.1204, -0.9852, 0.1215])
+        o3d.visualization.draw_geometries(clouds + [mesh_frame],
+                            zoom=0.8,
+                            front=[-0.4999, -0.1659, -0.8499],
+                            lookat=[2.1813, 2.0619, 2.0999],
+                            up=[0.1204, -0.9852, 0.1215])
 
     # mesh_sphere = o3d.create_mesh_sphere(radius = 1.0)
     # mesh_sphere.compute_vertex_normals()
@@ -163,5 +164,5 @@ def plane_seg():
                                 #   up=[-0.0694, -0.9768, 0.2024])
 
 if __name__ == '__main__':
-    # plane_seg()
-    view_pc()
+    plane_seg()
+    # view_pc()

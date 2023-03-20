@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 from pprint import pprint
+import open3d as o3d
 
 start = time.time()
 
@@ -16,12 +17,12 @@ pose = sorted(os.listdir(POSE_DIR))
 depth = sorted(os.listdir(DEPTH_DIR))
 print(len(pose), len(depth))
 
-NUM_IMAGES = 57
-pprint(depth[:NUM_IMAGES])
+NUM_IMAGES = 10
+all_points = []
 
-all_points = np.zeros((NUM_IMAGES, 1080*1080, 3))
+MAX_DEPTH = 20 # meters
 
-for i in range(NUM_IMAGES-3, NUM_IMAGES-1): #change this 3
+for i in range(1, NUM_IMAGES + 1): #change this 3
 
     print("Img name:", depth[i])
 
@@ -43,7 +44,10 @@ for i in range(NUM_IMAGES-3, NUM_IMAGES-1): #change this 3
 
     # load depth png
     img_depth = iio.imread(os.path.join(DEPTH_DIR, depth[i]))/512.0 #in meters
-    # print(img_depth)
+    print("Max depth:", img_depth.max())
+
+    # plt.hist(img_depth)
+    # plt.show()
 
     # create list of pixels on image plane
     # pixels = np.zeros((img_depth.shape[0], img_depth.shape[1], 3))
@@ -55,8 +59,13 @@ for i in range(NUM_IMAGES-3, NUM_IMAGES-1): #change this 3
     xs = np.arange(img_depth.shape[0])
     ys = np.arange(img_depth.shape[1])
     yS, xs = np.meshgrid(ys, xs, sparse=True)
-    pixels = np.stack([img_depth * xs, img_depth * ys, img_depth], axis=2)
+    pixels = np.stack([img_depth * ys, img_depth * xs, img_depth], axis=2)
     flattened = np.reshape(pixels, (-1, 3))
+
+    mask = flattened[:, 2] < MAX_DEPTH
+    print(mask.shape)
+    filtered = flattened[mask]
+    print("Filtered shape", filtered.shape)
     
     # compute 3D points in world system
     # print("RT", RT) # RT is 3x4 but need to make it a square matrix to invert
@@ -66,33 +75,34 @@ for i in range(NUM_IMAGES-3, NUM_IMAGES-1): #change this 3
     # points_3D_world = (np.linalg.inv(np.vstack((RT, homo))) @ np.vstack((points_3D.T, ones))).T
     # print(points_3D_world.shape)
 
-    points_world = ((flattened @ np.linalg.inv(K).T) - T) @ R
+    points_world = ((filtered @ np.linalg.inv(K).T) - T) @ R
     print(points_world.shape)
     
-    all_points[i-1] = points_world
+    all_points.append(points_world)
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection = '3d')
+clouds = []
+for points in all_points:
+    point_cloud_o3d = o3d.geometry.PointCloud()
+    point_cloud_o3d.points = o3d.utility.Vector3dVector(points)
+    downsampled = point_cloud_o3d.voxel_down_sample(voxel_size=0.01)
+    downsampled.paint_uniform_color(np.random.uniform(size=3))
+    clouds.append(downsampled)
 
+o3d.visualization.draw_geometries(clouds)
 
-# ax.scatter(pixels[:,0], pixels[:,1], pixels[:,2])
-# ax.scatter(points_3D[:,0], points_3D[:,1], points_3D[:,2], s=.1, alpha=0.5)
-# ax.scatter(points_3D_world[:,0], points_3D_world[:,1], points_3D_world[:,2], s=.1, alpha=0.5)
-
-all_points = np.reshape(all_points, (-1, 3))
+all_points = np.concatenate(all_points, axis=0)
 print(all_points.shape)
-# plt.scatter(all_points[:, 0], all_points[:, 1], all_points[:, 2], color="g")
-# plt.show()    
 
 end = time.time()
 print(end - start, " seconds")
 
-import open3d as o3d
 point_cloud_o3d = o3d.geometry.PointCloud()
 point_cloud_o3d.points = o3d.utility.Vector3dVector(all_points)
-downsampled = point_cloud_o3d.voxel_down_sample(voxel_size=0.05)
+downsampled = point_cloud_o3d.voxel_down_sample(voxel_size=0.01)
 print(point_cloud_o3d, downsampled)
 o3d.visualization.draw_geometries([downsampled])
+
+
 
 # print(points_3D.shape)
 # print(points_3D)
