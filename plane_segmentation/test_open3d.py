@@ -5,14 +5,16 @@ import matplotlib.pyplot as plt
 RESOLUTION = 0.025 # meters
 
 def view_pc():
-
     print("Load a ply point cloud, print it, and render it")
     # ply_point_cloud = o3d.data.PLYPointCloud()
     # path = ply_point_cloud.path
     path = '/storage/pointclouds/ptcloud_0.1grid_colored.ply'
+    # path = '/storage/pointclouds/complete_color_pointcloud.ply'
     pcd = o3d.io.read_point_cloud(path)
+    # bbox = o3d.geometry.AxisAlignedBoundingBox([-float('inf'), -float('inf'), -.1], [float('inf'), float('inf'), 3.2])
+    # pcd = pcd.crop(bbox)
     print(pcd)
-    pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+    # pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0, origin=[0, 0, 0])
     o3d.visualization.draw_geometries([pcd, mesh_frame],
                                     zoom=0.3412,
@@ -121,8 +123,8 @@ def plane_seg():
 
     for i in range(grid.shape[0]):
         for j in range(grid.shape[1]):
-            cell_min = min_bound + [i * res, -10, j * res]
-            cell_max = min_bound + [(i+1) * res, 10, (j+1) * res]
+            cell_min = min_bound + [i * res, j * res, -.1]
+            cell_max = min_bound + [(i+1) * res, (j+1) * res, 3]
             bbox = o3d.geometry.AxisAlignedBoundingBox(cell_min[:, None], cell_max[:, None])
             # print(bbox)
 
@@ -164,5 +166,5 @@ def plane_seg():
                                 #   up=[-0.0694, -0.9768, 0.2024])
 
 if __name__ == '__main__':
-    plane_seg()
-    # view_pc()
+    # plane_seg()
+    view_pc()
