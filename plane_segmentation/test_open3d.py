@@ -12,7 +12,7 @@ def view_pc():
     path = '/storage/pointclouds/complete_color_pointcloud.ply'
     # path = "/storage/pointclouds/downsampled_color_pointcloud.ply"
     pcd = o3d.io.read_point_cloud(path)
-    bbox = o3d.geometry.AxisAlignedBoundingBox([-float('inf'), -float('inf'), -.1], [float('inf'), float('inf'), 2.1])
+    bbox = o3d.geometry.AxisAlignedBoundingBox([-float('inf'), -float('inf'), -.1], [float('inf'), float('inf'), 3.1])
     pcd = pcd.crop(bbox)
     # o3d.io.write_point_cloud(path, pcd)
     # pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
@@ -138,7 +138,6 @@ def plane_seg():
     print(total_points)
 
     print(f"Found {np.count_nonzero(grid)} blocked cells")
-    plt.ion()
     plt.imshow(grid.T)
     plt.gca().invert_yaxis()
     plt.savefig("obstacle_grid.png")
@@ -147,5 +146,5 @@ def plane_seg():
 
 
 if __name__ == '__main__':
-    # plane_seg()
-    view_pc()
+    plane_seg()
+    # view_pc()
